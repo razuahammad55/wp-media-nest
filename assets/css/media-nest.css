@@ -1,0 +1,464 @@
+/**
+ * WP Media Nest - Styles
+ *
+ * @package WP_Media_Nest
+ */
+
+/* ============================================
+   Layout & Container Styles
+   ============================================ */
+
+.wrap.media-nest-active {
+	display: flex;
+	flex-wrap: wrap;
+}
+
+.wrap.media-nest-active > h1 {
+	width: 100%;
+	flex: 0 0 100%;
+}
+
+.wrap.media-nest-active > .page-title-action {
+	position: absolute;
+	top: 9px;
+	left: 200px;
+}
+
+.media-nest-sidebar {
+	width: 250px;
+	min-width: 250px;
+	flex-shrink: 0;
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	border-radius: 4px;
+	margin-right: 20px;
+	margin-top: 20px;
+	overflow: hidden;
+	max-height: calc(100vh - 200px);
+	display: flex;
+	flex-direction: column;
+}
+
+.wrap.media-nest-active .wp-list-table {
+	flex: 1;
+}
+
+/* Modal sidebar */
+.media-nest-modal-sidebar {
+	width: 220px;
+	min-width: 220px;
+	background: #f6f7f7;
+	border-right: 1px solid #c3c4c7;
+	overflow-y: auto;
+	position: absolute;
+	left: 0;
+	top: 0;
+	bottom: 0;
+	z-index: 10;
+}
+
+.media-frame-content .attachments-browser {
+	padding-left: 220px !important;
+}
+
+/* ============================================
+   Folder Tree Styles
+   ============================================ */
+
+.media-nest-folder-tree {
+	padding: 10px 0;
+	overflow-y: auto;
+	flex: 1;
+}
+
+.media-nest-folder-item {
+	user-select: none;
+}
+
+.media-nest-folder-row {
+	display: flex;
+	align-items: center;
+	padding: 8px 10px;
+	cursor: pointer;
+	transition: background-color 0.15s ease;
+	position: relative;
+	border-left: 3px solid transparent;
+}
+
+.media-nest-folder-row:hover {
+	background-color: #f0f0f1;
+}
+
+.media-nest-folder-item.selected > .media-nest-folder-row {
+	background-color: #2271b1;
+	color: #fff;
+	border-left-color: #135e96;
+}
+
+.media-nest-folder-item.selected > .media-nest-folder-row .dashicons {
+	color: #fff;
+}
+
+.media-nest-folder-item.selected > .media-nest-folder-row .media-nest-folder-count {
+	background-color: rgba(255, 255, 255, 0.2);
+	color: #fff;
+}
+
+/* Folder toggle */
+.media-nest-folder-toggle {
+	width: 20px;
+	height: 20px;
+	font-size: 16px;
+	color: #787c82;
+	cursor: pointer;
+	flex-shrink: 0;
+}
+
+.media-nest-folder-toggle:hover {
+	color: #2271b1;
+}
+
+.media-nest-folder-toggle-placeholder {
+	width: 20px;
+	flex-shrink: 0;
+}
+
+/* Folder icon */
+.media-nest-folder-icon {
+	width: 20px;
+	height: 20px;
+	font-size: 18px;
+	color: #dba617;
+	margin-right: 8px;
+	flex-shrink: 0;
+}
+
+.media-nest-folder-item.is-all-files .media-nest-folder-icon {
+	color: #3582c4;
+}
+
+.media-nest-folder-item.is-system .media-nest-folder-icon {
+	color: #787c82;
+}
+
+.media-nest-folder-item.selected > .media-nest-folder-row .media-nest-folder-icon {
+	color: #fff;
+}
+
+/* Folder name */
+.media-nest-folder-name {
+	flex: 1;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-size: 13px;
+	line-height: 1.4;
+}
+
+/* Folder count */
+.media-nest-folder-count {
+	background-color: #dcdcde;
+	color: #50575e;
+	padding: 2px 8px;
+	border-radius: 10px;
+	font-size: 11px;
+	font-weight: 500;
+	margin-left: 8px;
+	flex-shrink: 0;
+}
+
+/* Folder actions */
+.media-nest-folder-actions {
+	display: none;
+	margin-left: 5px;
+	flex-shrink: 0;
+}
+
+.media-nest-folder-row:hover .media-nest-folder-actions {
+	display: flex;
+}
+
+.media-nest-folder-item.selected > .media-nest-folder-row .media-nest-folder-actions {
+	display: flex;
+}
+
+.media-nest-folder-actions button {
+	background: none;
+	border: none;
+	padding: 2px;
+	margin: 0 2px;
+	cursor: pointer;
+	opacity: 0.6;
+	transition: opacity 0.15s ease;
+}
+
+.media-nest-folder-actions button:hover {
+	opacity: 1;
+}
+
+.media-nest-folder-actions button .dashicons {
+	font-size: 14px;
+	width: 14px;
+	height: 14px;
+}
+
+/* Children container */
+.media-nest-folder-children {
+	border-left: 1px solid #dcdcde;
+	margin-left: 19px;
+}
+
+/* ============================================
+   Action Bar Styles
+   ============================================ */
+
+.media-nest-actions {
+	padding: 10px;
+	border-top: 1px solid #c3c4c7;
+	background: #f6f7f7;
+}
+
+.media-nest-new-folder {
+	width: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 5px;
+}
+
+.media-nest-new-folder .dashicons {
+	font-size: 16px;
+	width: 16px;
+	height: 16px;
+}
+
+/* ============================================
+   Dialog Styles
+   ============================================ */
+
+.media-nest-dialog-overlay {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background: rgba(0, 0, 0, 0.5);
+	z-index: 160000;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.media-nest-dialog {
+	background: #fff;
+	border-radius: 4px;
+	box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+	width: 400px;
+	max-width: 90%;
+	animation: mediaDialogFadeIn 0.2s ease;
+}
+
+@keyframes mediaDialogFadeIn {
+	from {
+		opacity: 0;
+		transform: translateY(-20px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+.media-nest-dialog-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 15px 20px;
+	border-bottom: 1px solid #dcdcde;
+}
+
+.media-nest-dialog-header .title {
+	font-size: 16px;
+	font-weight: 600;
+	color: #1d2327;
+}
+
+.media-nest-dialog-close {
+	background: none;
+	border: none;
+	font-size: 24px;
+	color: #787c82;
+	cursor: pointer;
+	padding: 0;
+	line-height: 1;
+}
+
+.media-nest-dialog-close:hover {
+	color: #d63638;
+}
+
+.media-nest-dialog-content {
+	padding: 20px;
+}
+
+.media-nest-dialog-content input[type="text"] {
+	width: 100%;
+	padding: 8px 12px;
+	font-size: 14px;
+}
+
+.media-nest-dialog-footer {
+	display: flex;
+	justify-content: flex-end;
+	gap: 10px;
+	padding: 15px 20px;
+	border-top: 1px solid #dcdcde;
+	background: #f6f7f7;
+	border-radius: 0 0 4px 4px;
+}
+
+/* ============================================
+   Context Menu Styles
+   ============================================ */
+
+.media-nest-context-menu {
+	position: fixed;
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	border-radius: 4px;
+	box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
+	z-index: 160001;
+	min-width: 150px;
+	padding: 5px 0;
+}
+
+.media-nest-context-menu .menu-item {
+	padding: 8px 15px;
+	cursor: pointer;
+	font-size: 13px;
+	transition: background-color 0.1s ease;
+}
+
+.media-nest-context-menu .menu-item:hover {
+	background: #2271b1;
+	color: #fff;
+}
+
+/* ============================================
+   Drag & Drop Styles
+   ============================================ */
+
+.media-nest-folder-item.media-nest-drop-hover > .media-nest-folder-row {
+	background-color: #2271b1 !important;
+	color: #fff !important;
+}
+
+.media-nest-folder-item.media-nest-drop-hover > .media-nest-folder-row .dashicons,
+.media-nest-folder-item.media-nest-drop-hover > .media-nest-folder-row .media-nest-folder-icon {
+	color: #fff !important;
+}
+
+.media-nest-folder-item.is-dragging {
+	opacity: 0.5;
+}
+
+.media-nest-drag-helper {
+	background: #2271b1;
+	color: #fff;
+	padding: 8px 15px;
+	border-radius: 4px;
+	font-size: 13px;
+	font-weight: 500;
+	box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+	white-space: nowrap;
+}
+
+body.media-nest-dragging .media-nest-folder-item:not(.is-system):not(.is-all-files):not(.is-dragging) > .media-nest-folder-row {
+	border: 2px dashed transparent;
+	transition: border-color 0.2s ease;
+}
+
+body.media-nest-dragging .media-nest-folder-item:not(.is-system):not(.is-all-files):not(.is-dragging):hover > .media-nest-folder-row {
+	border-color: #2271b1;
+}
+
+/* ============================================
+   Folder Filter Dropdown
+   ============================================ */
+
+.media-nest-folder-filter {
+	min-width: 180px;
+	margin-right: 10px;
+}
+
+/* ============================================
+   Responsive Adjustments
+   ============================================ */
+
+@media screen and (max-width: 1200px) {
+	.media-nest-sidebar {
+		width: 220px;
+		min-width: 220px;
+	}
+}
+
+@media screen and (max-width: 960px) {
+	.wrap.media-nest-active {
+		flex-direction: column;
+	}
+
+	.media-nest-sidebar {
+		width: 100%;
+		margin-right: 0;
+		margin-bottom: 20px;
+		max-height: 300px;
+	}
+
+	.media-nest-modal-sidebar {
+		width: 180px;
+		min-width: 180px;
+	}
+
+	.media-frame-content .attachments-browser {
+		padding-left: 180px !important;
+	}
+}
+
+@media screen and (max-width: 782px) {
+	.media-nest-modal-sidebar {
+		position: relative;
+		width: 100%;
+		border-right: none;
+		border-bottom: 1px solid #c3c4c7;
+		max-height: 200px;
+	}
+
+	.media-frame-content .attachments-browser {
+		padding-left: 0 !important;
+	}
+}
+
+/* ============================================
+   Grid View Adjustments
+   ============================================ */
+
+.wrap.media-nest-active .media-frame {
+	margin-left: 0;
+}
+
+.wrap.media-nest-active #wp-media-grid {
+	flex: 1;
+	min-width: 0;
+}
+
+/* ============================================
+   Print Styles
+   ============================================ */
+
+@media print {
+	.media-nest-sidebar,
+	.media-nest-modal-sidebar,
+	.media-nest-actions {
+		display: none;
+	}
+}
