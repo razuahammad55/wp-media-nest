@@ -129,8 +129,7 @@ class WP_Media_Nest {
 	 * @return int|false Term ID or false if not found.
 	 */
 	public static function get_uncategorized_folder_id() {
-		$term = get_term_by( 'slug', 'uncategorized', WP_MEDIA_NEST_TAXONOMY );
-		return $term ? $term->term_id : false;
+		return WP_Media_Nest_Taxonomy::get_uncategorized_folder_id();
 	}
 
 	/**
@@ -140,10 +139,6 @@ class WP_Media_Nest {
 	 * @return bool True if system folder.
 	 */
 	public static function is_system_folder( $term_id ) {
-		$term = get_term( $term_id, WP_MEDIA_NEST_TAXONOMY );
-		if ( ! $term || is_wp_error( $term ) ) {
-			return false;
-		}
-		return 'uncategorized' === $term->slug;
+		return WP_Media_Nest_Taxonomy::is_system_folder( $term_id );
 	}
 }
