@@ -56,8 +56,15 @@ class WP_Media_Nest_Ajax {
 	 * @return bool|WP_Error True if valid, WP_Error otherwise.
 	 */
 	private function verify_request() {
-		// Verify nonce.
-		if ( ! check_ajax_referer( self::NONCE_ACTION, 'nonce', false ) ) {
+		// Check nonce - it could be in POST or GET.
+		$nonce = '';
+		if ( isset( $_POST['nonce'] ) ) {
+			$nonce = sanitize_text_field( wp_unslash( $_POST['nonce'] ) );
+		} elseif ( isset( $_GET['nonce'] ) ) {
+			$nonce = sanitize_text_field( wp_unslash( $_GET['nonce'] ) );
+		}
+
+		if ( ! wp_verify_nonce( $nonce, self::NONCE_ACTION ) ) {
 			return new WP_Error( 'invalid_nonce', __( 'Security check failed.', 'wp-media-nest' ) );
 		}
 
@@ -91,6 +98,7 @@ class WP_Media_Nest_Ajax {
 		$verify = $this->verify_request();
 		if ( is_wp_error( $verify ) ) {
 			$this->send_response( $verify, false );
+			return;
 		}
 
 		$tree = WP_Media_Nest_Taxonomy::get_folder_tree();
@@ -112,6 +120,7 @@ class WP_Media_Nest_Ajax {
 		$verify = $this->verify_request();
 		if ( is_wp_error( $verify ) ) {
 			$this->send_response( $verify, false );
+			return;
 		}
 
 		$name   = isset( $_POST['name'] ) ? sanitize_text_field( wp_unslash( $_POST['name'] ) ) : '';
@@ -121,6 +130,7 @@ class WP_Media_Nest_Ajax {
 
 		if ( is_wp_error( $result ) ) {
 			$this->send_response( $result, false );
+			return;
 		}
 
 		$this->send_response( $result );
@@ -133,6 +143,7 @@ class WP_Media_Nest_Ajax {
 		$verify = $this->verify_request();
 		if ( is_wp_error( $verify ) ) {
 			$this->send_response( $verify, false );
+			return;
 		}
 
 		$folder_id = isset( $_POST['folder_id'] ) ? absint( $_POST['folder_id'] ) : 0;
@@ -142,6 +153,7 @@ class WP_Media_Nest_Ajax {
 
 		if ( is_wp_error( $result ) ) {
 			$this->send_response( $result, false );
+			return;
 		}
 
 		$this->send_response( $result );
@@ -154,6 +166,7 @@ class WP_Media_Nest_Ajax {
 		$verify = $this->verify_request();
 		if ( is_wp_error( $verify ) ) {
 			$this->send_response( $verify, false );
+			return;
 		}
 
 		$folder_id = isset( $_POST['folder_id'] ) ? absint( $_POST['folder_id'] ) : 0;
@@ -162,6 +175,7 @@ class WP_Media_Nest_Ajax {
 
 		if ( is_wp_error( $result ) ) {
 			$this->send_response( $result, false );
+			return;
 		}
 
 		$this->send_response( array( 'deleted' => true ) );
@@ -174,6 +188,7 @@ class WP_Media_Nest_Ajax {
 		$verify = $this->verify_request();
 		if ( is_wp_error( $verify ) ) {
 			$this->send_response( $verify, false );
+			return;
 		}
 
 		$folder_id  = isset( $_POST['folder_id'] ) ? absint( $_POST['folder_id'] ) : 0;
@@ -183,6 +198,7 @@ class WP_Media_Nest_Ajax {
 
 		if ( is_wp_error( $result ) ) {
 			$this->send_response( $result, false );
+			return;
 		}
 
 		$this->send_response( $result );
@@ -195,22 +211,34 @@ class WP_Media_Nest_Ajax {
 		$verify = $this->verify_request();
 		if ( is_wp_error( $verify ) ) {
 			$this->send_response( $verify, false );
+			return;
 		}
 
-		$folder_id = isset( $_POST['folder_id'] ) ? absint( $_POST['folder_id'] ) : 0;
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-		$attachment_ids = isset( $_POST['attachment_ids'] ) ? wp_unslash( $_POST['attachment_ids'] ) : array();
+		$folder_id      = isset( $_POST['folder_id'] ) ? absint( $_POST['folder_id'] ) : 0;
+		$attachment_ids = array();
 
-		if ( is_string( $attachment_ids ) ) {
-			$attachment_ids = json_decode( $attachment_ids, true );
+		if ( isset( $_POST['attachment_ids'] ) ) {
+			$raw_ids = wp_unslash( $_POST['attachment_ids'] );
+			if ( is_string( $raw_ids ) ) {
+				$attachment_ids = json_decode( $raw_ids, true );
+			} elseif ( is_array( $raw_ids ) ) {
+				$attachment_ids = $raw_ids;
+			}
 		}
 
 		$attachment_ids = array_map( 'absint', (array) $attachment_ids );
+		$attachment_ids = array_filter( $attachment_ids );
+
+		if ( empty( $attachment_ids ) ) {
+			$this->send_response( new WP_Error( 'no_attachments', __( 'No attachments specified.', 'wp-media-nest' ) ), false );
+			return;
+		}
 
 		$result = WP_Media_Nest_Taxonomy::assign_media_to_folder( $attachment_ids, $folder_id );
 
 		if ( is_wp_error( $result ) ) {
 			$this->send_response( $result, false );
+			return;
 		}
 
 		// Get updated folder counts.
@@ -231,6 +259,7 @@ class WP_Media_Nest_Ajax {
 		$verify = $this->verify_request();
 		if ( is_wp_error( $verify ) ) {
 			$this->send_response( $verify, false );
+			return;
 		}
 
 		$folder_id = isset( $_POST['folder_id'] ) ? absint( $_POST['folder_id'] ) : 0;
@@ -260,12 +289,13 @@ class WP_Media_Nest_Ajax {
 
 		$attachments = array();
 		foreach ( $query->posts as $post ) {
+			$thumbnail = wp_get_attachment_image_src( $post->ID, 'thumbnail' );
 			$attachments[] = array(
 				'id'        => $post->ID,
 				'title'     => $post->post_title,
-				'filename'  => basename( get_attached_file( $post->ID ) ),
+				'filename'  => wp_basename( get_attached_file( $post->ID ) ),
 				'url'       => wp_get_attachment_url( $post->ID ),
-				'thumbnail' => wp_get_attachment_image_src( $post->ID, 'thumbnail' ),
+				'thumbnail' => $thumbnail ? $thumbnail[0] : '',
 				'type'      => $post->post_mime_type,
 				'date'      => $post->post_date,
 			);
