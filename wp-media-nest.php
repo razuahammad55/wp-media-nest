@@ -29,28 +29,24 @@ define( 'WP_MEDIA_NEST_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
 define( 'WP_MEDIA_NEST_TAXONOMY', 'media_folder' );
 
 /**
- * Autoloader for plugin classes.
- *
- * @param string $class_name The class name to load.
+ * Load required class files.
  */
-spl_autoload_register(
-	function ( $class_name ) {
-		$prefix   = 'WP_Media_Nest';
-		$base_dir = WP_MEDIA_NEST_PLUGIN_DIR . 'includes/';
+function wp_media_nest_load_classes() {
+	$classes = array(
+		'WP_Media_Nest_Taxonomy' => 'class-wp-media-nest-taxonomy.php',
+		'WP_Media_Nest_Ajax'     => 'class-wp-media-nest-ajax.php',
+		'WP_Media_Nest_Admin'    => 'class-wp-media-nest-admin.php',
+		'WP_Media_Nest_Query'    => 'class-wp-media-nest-query.php',
+		'WP_Media_Nest'          => 'class-wp-media-nest.php',
+	);
 
-		$len = strlen( $prefix );
-		if ( strncmp( $prefix, $class_name, $len ) !== 0 ) {
-			return;
-		}
-
-		$relative_class = substr( $class_name, $len );
-		$file           = $base_dir . 'class-' . strtolower( str_replace( '_', '-', $relative_class ) ) . '.php';
-
-		if ( file_exists( $file ) ) {
-			require $file;
+	foreach ( $classes as $class_name => $file ) {
+		$file_path = WP_MEDIA_NEST_PLUGIN_DIR . 'includes/' . $file;
+		if ( file_exists( $file_path ) ) {
+			require_once $file_path;
 		}
 	}
-);
+}
 
 /**
  * Initialize the plugin.
@@ -58,6 +54,7 @@ spl_autoload_register(
  * @return WP_Media_Nest The main plugin instance.
  */
 function wp_media_nest() {
+	wp_media_nest_load_classes();
 	return WP_Media_Nest::get_instance();
 }
 
@@ -67,29 +64,27 @@ add_action( 'plugins_loaded', 'wp_media_nest' );
 /**
  * Activation hook.
  */
-register_activation_hook(
-	__FILE__,
-	function () {
-		// Register taxonomy on activation to flush rewrite rules.
-		WP_Media_Nest_Taxonomy::register_taxonomy();
+function wp_media_nest_activate() {
+	wp_media_nest_load_classes();
+	
+	// Register taxonomy on activation.
+	WP_Media_Nest_Taxonomy::register_taxonomy();
 
-		// Create default folders.
-		WP_Media_Nest_Taxonomy::create_default_folders();
+	// Create default folders.
+	WP_Media_Nest_Taxonomy::create_default_folders();
 
-		// Flush rewrite rules.
-		flush_rewrite_rules();
+	// Flush rewrite rules.
+	flush_rewrite_rules();
 
-		// Set activation flag for admin notice.
-		set_transient( 'wp_media_nest_activated', true, 30 );
-	}
-);
+	// Set activation flag for admin notice.
+	set_transient( 'wp_media_nest_activated', true, 30 );
+}
+register_activation_hook( __FILE__, 'wp_media_nest_activate' );
 
 /**
  * Deactivation hook.
  */
-register_deactivation_hook(
-	__FILE__,
-	function () {
-		flush_rewrite_rules();
-	}
-);
+function wp_media_nest_deactivate() {
+	flush_rewrite_rules();
+}
+register_deactivation_hook( __FILE__, 'wp_media_nest_deactivate' );
