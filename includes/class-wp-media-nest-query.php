@@ -39,9 +39,14 @@ class WP_Media_Nest_Query {
 			return;
 		}
 
-		// Check for folder filter in URL.
+		// Check for folder filter in URL (phpcs ignore for query check).
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$folder_id = isset( $_GET['media_folder'] ) ? absint( $_GET['media_folder'] ) : 0;
+		if ( ! isset( $_GET['media_folder'] ) ) {
+			return;
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$folder_id = absint( $_GET['media_folder'] );
 
 		if ( $folder_id > 0 ) {
 			$tax_query = $query->get( 'tax_query' );
@@ -67,13 +72,19 @@ class WP_Media_Nest_Query {
 	 */
 	public function filter_ajax_query_attachments( $query ) {
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$folder_id = isset( $_REQUEST['media_folder'] ) ? absint( $_REQUEST['media_folder'] ) : 0;
-
-		// Check for "all" filter (folder_id = -1 means no folder filter).
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		if ( isset( $_REQUEST['media_folder'] ) && '-1' === $_REQUEST['media_folder'] ) {
+		if ( ! isset( $_REQUEST['media_folder'] ) ) {
 			return $query;
 		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$folder_id = sanitize_text_field( wp_unslash( $_REQUEST['media_folder'] ) );
+
+		// Check for "all" filter (folder_id = -1 means no folder filter).
+		if ( '-1' === $folder_id || '' === $folder_id ) {
+			return $query;
+		}
+
+		$folder_id = absint( $folder_id );
 
 		if ( $folder_id > 0 ) {
 			if ( ! isset( $query['tax_query'] ) ) {
