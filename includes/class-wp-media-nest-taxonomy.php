@@ -30,6 +30,10 @@ class WP_Media_Nest_Taxonomy {
 	 * Register the media folder taxonomy.
 	 */
 	public static function register_taxonomy() {
+		if ( taxonomy_exists( WP_MEDIA_NEST_TAXONOMY ) ) {
+			return;
+		}
+
 		$labels = array(
 			'name'              => _x( 'Media Folders', 'taxonomy general name', 'wp-media-nest' ),
 			'singular_name'     => _x( 'Media Folder', 'taxonomy singular name', 'wp-media-nest' ),
@@ -46,23 +50,22 @@ class WP_Media_Nest_Taxonomy {
 		);
 
 		$args = array(
-			'labels'             => $labels,
-			'hierarchical'       => true,
-			'public'             => false,
-			'show_ui'            => false,
-			'show_admin_column'  => false,
-			'show_in_nav_menus'  => false,
-			'show_tagcloud'      => false,
-			'show_in_rest'       => true,
-			'query_var'          => false,
-			'rewrite'            => false,
-			'capabilities'       => array(
+			'labels'            => $labels,
+			'hierarchical'      => true,
+			'public'            => false,
+			'show_ui'           => false,
+			'show_admin_column' => false,
+			'show_in_nav_menus' => false,
+			'show_tagcloud'     => false,
+			'show_in_rest'      => true,
+			'query_var'         => false,
+			'rewrite'           => false,
+			'capabilities'      => array(
 				'manage_terms' => 'upload_files',
 				'edit_terms'   => 'upload_files',
 				'delete_terms' => 'upload_files',
 				'assign_terms' => 'upload_files',
 			),
-			'update_count_callback' => array( __CLASS__, 'update_folder_count' ),
 		);
 
 		register_taxonomy( WP_MEDIA_NEST_TAXONOMY, 'attachment', $args );
@@ -72,6 +75,10 @@ class WP_Media_Nest_Taxonomy {
 	 * Create default system folders.
 	 */
 	public static function create_default_folders() {
+		if ( ! taxonomy_exists( WP_MEDIA_NEST_TAXONOMY ) ) {
+			return;
+		}
+
 		// Check if uncategorized folder exists.
 		$uncategorized = term_exists( 'uncategorized', WP_MEDIA_NEST_TAXONOMY );
 
@@ -97,7 +104,7 @@ class WP_Media_Nest_Taxonomy {
 		$existing_terms = wp_get_object_terms( $attachment_id, WP_MEDIA_NEST_TAXONOMY );
 
 		if ( empty( $existing_terms ) || is_wp_error( $existing_terms ) ) {
-			$uncategorized_id = WP_Media_Nest::get_uncategorized_folder_id();
+			$uncategorized_id = self::get_uncategorized_folder_id();
 			if ( $uncategorized_id ) {
 				wp_set_object_terms( $attachment_id, $uncategorized_id, WP_MEDIA_NEST_TAXONOMY );
 			}
@@ -105,32 +112,27 @@ class WP_Media_Nest_Taxonomy {
 	}
 
 	/**
-	 * Custom count callback for taxonomy terms.
+	 * Get the uncategorized folder term ID.
 	 *
-	 * @param array  $terms    Array of term IDs.
-	 * @param object $taxonomy Taxonomy object.
+	 * @return int|false Term ID or false if not found.
 	 */
-	public static function update_folder_count( $terms, $taxonomy ) {
-		global $wpdb;
+	public static function get_uncategorized_folder_id() {
+		$term = get_term_by( 'slug', 'uncategorized', WP_MEDIA_NEST_TAXONOMY );
+		return $term ? $term->term_id : false;
+	}
 
-		foreach ( (array) $terms as $term_id ) {
-			$count = (int) $wpdb->get_var(
-				$wpdb->prepare(
-					"SELECT COUNT(*) FROM $wpdb->term_relationships
-					INNER JOIN $wpdb->posts ON $wpdb->term_relationships.object_id = $wpdb->posts.ID
-					WHERE $wpdb->term_relationships.term_taxonomy_id = %d
-					AND $wpdb->posts.post_type = 'attachment'
-					AND $wpdb->posts.post_status = 'inherit'",
-					$term_id
-				)
-			);
-
-			$wpdb->update(
-				$wpdb->term_taxonomy,
-				array( 'count' => $count ),
-				array( 'term_taxonomy_id' => $term_id )
-			);
+	/**
+	 * Check if a folder is a system folder.
+	 *
+	 * @param int $term_id The term ID to check.
+	 * @return bool True if system folder.
+	 */
+	public static function is_system_folder( $term_id ) {
+		$term = get_term( $term_id, WP_MEDIA_NEST_TAXONOMY );
+		if ( ! $term || is_wp_error( $term ) ) {
+			return false;
 		}
+		return 'uncategorized' === $term->slug;
 	}
 
 	/**
@@ -140,6 +142,10 @@ class WP_Media_Nest_Taxonomy {
 	 * @return array Hierarchical folder structure.
 	 */
 	public static function get_folder_tree( $parent = 0 ) {
+		if ( ! taxonomy_exists( WP_MEDIA_NEST_TAXONOMY ) ) {
+			return array();
+		}
+
 		$folders = get_terms(
 			array(
 				'taxonomy'   => WP_MEDIA_NEST_TAXONOMY,
@@ -150,7 +156,7 @@ class WP_Media_Nest_Taxonomy {
 			)
 		);
 
-		if ( is_wp_error( $folders ) ) {
+		if ( is_wp_error( $folders ) || empty( $folders ) ) {
 			return array();
 		}
 
@@ -164,8 +170,8 @@ class WP_Media_Nest_Taxonomy {
 				'name'      => $folder->name,
 				'slug'      => $folder->slug,
 				'parent'    => $folder->parent,
-				'count'     => $folder->count,
-				'is_system' => WP_Media_Nest::is_system_folder( $folder->term_id ),
+				'count'     => (int) $folder->count,
+				'is_system' => self::is_system_folder( $folder->term_id ),
 				'children'  => $children,
 			);
 		}
@@ -179,6 +185,10 @@ class WP_Media_Nest_Taxonomy {
 	 * @return array Flat folder list with depth information.
 	 */
 	public static function get_folders_flat() {
+		if ( ! taxonomy_exists( WP_MEDIA_NEST_TAXONOMY ) ) {
+			return array();
+		}
+
 		$folders = get_terms(
 			array(
 				'taxonomy'   => WP_MEDIA_NEST_TAXONOMY,
@@ -188,7 +198,7 @@ class WP_Media_Nest_Taxonomy {
 			)
 		);
 
-		if ( is_wp_error( $folders ) ) {
+		if ( is_wp_error( $folders ) || empty( $folders ) ) {
 			return array();
 		}
 
@@ -202,9 +212,9 @@ class WP_Media_Nest_Taxonomy {
 				'name'      => $folder->name,
 				'slug'      => $folder->slug,
 				'parent'    => $folder->parent,
-				'count'     => $folder->count,
+				'count'     => (int) $folder->count,
 				'depth'     => count( $ancestors ),
-				'is_system' => WP_Media_Nest::is_system_folder( $folder->term_id ),
+				'is_system' => self::is_system_folder( $folder->term_id ),
 			);
 		}
 
@@ -283,7 +293,7 @@ class WP_Media_Nest_Taxonomy {
 		$folder_id = absint( $folder_id );
 		$new_name  = sanitize_text_field( $new_name );
 
-		if ( WP_Media_Nest::is_system_folder( $folder_id ) ) {
+		if ( self::is_system_folder( $folder_id ) ) {
 			return new WP_Error( 'system_folder', __( 'System folders cannot be renamed.', 'wp-media-nest' ) );
 		}
 
@@ -329,7 +339,7 @@ class WP_Media_Nest_Taxonomy {
 			'name'      => $updated_term->name,
 			'slug'      => $updated_term->slug,
 			'parent'    => $updated_term->parent,
-			'count'     => $updated_term->count,
+			'count'     => (int) $updated_term->count,
 			'is_system' => false,
 		);
 	}
@@ -337,14 +347,14 @@ class WP_Media_Nest_Taxonomy {
 	/**
 	 * Delete a folder and optionally move contents.
 	 *
-	 * @param int  $folder_id    Folder term ID.
+	 * @param int  $folder_id            Folder term ID.
 	 * @param bool $move_to_uncategorized Whether to move contents to uncategorized.
 	 * @return bool|WP_Error True on success or error.
 	 */
 	public static function delete_folder( $folder_id, $move_to_uncategorized = true ) {
 		$folder_id = absint( $folder_id );
 
-		if ( WP_Media_Nest::is_system_folder( $folder_id ) ) {
+		if ( self::is_system_folder( $folder_id ) ) {
 			return new WP_Error( 'system_folder', __( 'System folders cannot be deleted.', 'wp-media-nest' ) );
 		}
 
@@ -356,10 +366,13 @@ class WP_Media_Nest_Taxonomy {
 
 		// Get all child folders.
 		$children = get_term_children( $folder_id, WP_MEDIA_NEST_TAXONOMY );
+		if ( is_wp_error( $children ) ) {
+			$children = array();
+		}
 
 		// Get all attachments in this folder and children.
 		$all_folder_ids   = array_merge( array( $folder_id ), $children );
-		$uncategorized_id = WP_Media_Nest::get_uncategorized_folder_id();
+		$uncategorized_id = self::get_uncategorized_folder_id();
 
 		if ( $move_to_uncategorized && $uncategorized_id ) {
 			// Get attachments from this folder and all children.
@@ -404,7 +417,7 @@ class WP_Media_Nest_Taxonomy {
 	/**
 	 * Move a folder to a new parent.
 	 *
-	 * @param int $folder_id Folder term ID.
+	 * @param int $folder_id  Folder term ID.
 	 * @param int $new_parent New parent folder ID (0 for root).
 	 * @return array|WP_Error Updated folder data or error.
 	 */
@@ -412,7 +425,7 @@ class WP_Media_Nest_Taxonomy {
 		$folder_id  = absint( $folder_id );
 		$new_parent = absint( $new_parent );
 
-		if ( WP_Media_Nest::is_system_folder( $folder_id ) ) {
+		if ( self::is_system_folder( $folder_id ) ) {
 			return new WP_Error( 'system_folder', __( 'System folders cannot be moved.', 'wp-media-nest' ) );
 		}
 
@@ -428,7 +441,7 @@ class WP_Media_Nest_Taxonomy {
 		}
 
 		$children = get_term_children( $folder_id, WP_MEDIA_NEST_TAXONOMY );
-		if ( in_array( $new_parent, $children, true ) ) {
+		if ( ! is_wp_error( $children ) && in_array( $new_parent, $children, true ) ) {
 			return new WP_Error( 'invalid_parent', __( 'Cannot move folder into its own subfolder.', 'wp-media-nest' ) );
 		}
 
@@ -457,7 +470,7 @@ class WP_Media_Nest_Taxonomy {
 			'name'      => $updated_term->name,
 			'slug'      => $updated_term->slug,
 			'parent'    => $updated_term->parent,
-			'count'     => $updated_term->count,
+			'count'     => (int) $updated_term->count,
 			'is_system' => false,
 		);
 	}
@@ -488,10 +501,7 @@ class WP_Media_Nest_Taxonomy {
 			wp_set_object_terms( $attachment_id, $folder_id, WP_MEDIA_NEST_TAXONOMY );
 		}
 
-		// Update term count.
-		wp_update_term_count( array( $folder_id ), WP_MEDIA_NEST_TAXONOMY );
-
-		// Update counts for previously assigned folders.
+		// Clean term cache to update counts.
 		clean_term_cache( array( $folder_id ), WP_MEDIA_NEST_TAXONOMY );
 
 		return true;
