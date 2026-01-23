@@ -42,7 +42,10 @@ class WP_Media_Nest_Admin {
 	 * @param string $hook Current admin page hook.
 	 */
 	public function enqueue_assets( $hook ) {
-		if ( ! in_array( $hook, array( 'upload.php', 'post.php', 'post-new.php' ), true ) ) {
+		// Only load on relevant pages.
+		$allowed_hooks = array( 'upload.php', 'post.php', 'post-new.php', 'media-new.php' );
+		
+		if ( ! in_array( $hook, $allowed_hooks, true ) ) {
 			return;
 		}
 
@@ -77,6 +80,10 @@ class WP_Media_Nest_Admin {
 		// Ensure media scripts are loaded.
 		wp_enqueue_media();
 
+		// jQuery UI dependencies.
+		wp_enqueue_script( 'jquery-ui-draggable' );
+		wp_enqueue_script( 'jquery-ui-droppable' );
+
 		// Folder tree component.
 		wp_enqueue_script(
 			'wp-media-nest-folder-tree',
@@ -90,7 +97,7 @@ class WP_Media_Nest_Admin {
 		wp_enqueue_script(
 			'wp-media-nest-library',
 			WP_MEDIA_NEST_PLUGIN_URL . 'assets/js/media-nest-library.js',
-			array( 'media-views', 'media-grid', 'wp-media-nest-folder-tree' ),
+			array( 'jquery', 'media-views', 'wp-media-nest-folder-tree' ),
 			WP_MEDIA_NEST_VERSION,
 			true
 		);
@@ -109,6 +116,9 @@ class WP_Media_Nest_Admin {
 	 * @return array Script configuration data.
 	 */
 	private function get_script_data() {
+		$screen = get_current_screen();
+		$is_media_page = $screen && 'upload' === $screen->base;
+
 		return array(
 			'nonce'       => wp_create_nonce( WP_Media_Nest_Ajax::NONCE_ACTION ),
 			'ajaxUrl'     => admin_url( 'admin-ajax.php' ),
@@ -140,7 +150,7 @@ class WP_Media_Nest_Admin {
 				'filterByFolder'   => __( 'Filter by folder', 'wp-media-nest' ),
 				'folders'          => __( 'Folders', 'wp-media-nest' ),
 			),
-			'isMediaPage' => $this->is_media_screen(),
+			'isMediaPage' => $is_media_page,
 		);
 	}
 
